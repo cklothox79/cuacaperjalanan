@@ -6,18 +6,24 @@ from streamlit_folium import st_folium
 import folium
 import plotly.graph_objects as go
 
+# Konfigurasi halaman
 st.set_page_config(page_title="Cuaca Perjalanan", layout="wide")
-st.title("🌤️ Cuaca Perjalanan")
-st.write("Lihat prakiraan suhu, hujan, awan, kelembapan, dan angin setiap jam untuk lokasi dan tanggal yang kamu pilih.")
 
-# Layout input 2 kolom
+# Judul & Nama Editor
+st.markdown("<h1 style='font-size:36px;'>🌤️ Cuaca Perjalanan</h1>", unsafe_allow_html=True)
+st.markdown("<p style='font-size:18px; color:gray;'><em>Editor: Ferri Kusuma (M8TB_14.22.0003)</em></p>", unsafe_allow_html=True)
+
+# Deskripsi
+st.markdown("<p style='font-size:17px;'>Lihat prakiraan suhu, hujan, awan, kelembapan, dan angin setiap jam untuk lokasi dan tanggal yang kamu pilih.</p>", unsafe_allow_html=True)
+
+# Input kota dan tanggal
 col1, col2 = st.columns([2, 1])
 with col1:
     kota = st.text_input("📝 Masukkan nama kota (opsional):")
 with col2:
     tanggal = st.date_input("📅 Pilih tanggal perjalanan:", value=date.today(), min_value=date.today())
 
-# Fungsi ambil koordinat dari kota
+# Fungsi ambil koordinat
 def get_coordinates(nama_kota):
     url = f"https://nominatim.openstreetmap.org/search?q={nama_kota}&format=json&limit=1"
     headers = {"User-Agent": "cuaca-perjalanan-app"}
@@ -27,15 +33,13 @@ def get_coordinates(nama_kota):
         return float(data["lat"]), float(data["lon"])
     return None, None
 
-# Inisialisasi koordinat
 lat = lon = None
 
-# Tampilkan peta
-st.markdown("### 🗺️ Klik lokasi di peta atau masukkan nama kota")
+# Peta input
+st.markdown("<h3 style='font-size:20px;'>🗺️ Klik lokasi di peta atau masukkan nama kota</h3>", unsafe_allow_html=True)
 default_location = [-2.5, 117.0]
 m = folium.Map(location=default_location, zoom_start=5)
 
-# Marker dari kota
 if kota:
     lat, lon = get_coordinates(kota)
     if lat and lon:
@@ -43,17 +47,15 @@ if kota:
         m.location = [lat, lon]
         m.zoom_start = 9
 
-# Klik peta
 m.add_child(folium.LatLngPopup())
 map_data = st_folium(m, height=400, use_container_width=True)
 
-# Marker dari klik peta
 if map_data and map_data["last_clicked"]:
     lat = map_data["last_clicked"]["lat"]
     lon = map_data["last_clicked"]["lng"]
     st.success(f"📍 Lokasi dari peta: {lat:.4f}, {lon:.4f}")
 
-# Fungsi ambil data cuaca
+# Ambil data cuaca dari Open-Meteo
 def get_hourly_weather(lat, lon, tanggal):
     tgl = tanggal.strftime("%Y-%m-%d")
     url = (
@@ -66,7 +68,7 @@ def get_hourly_weather(lat, lon, tanggal):
     r = requests.get(url)
     return r.json() if r.status_code == 200 else None
 
-# Proses data jika tersedia
+# Tampilkan data cuaca
 if lat and lon and tanggal:
     data = get_hourly_weather(lat, lon, tanggal)
     if data and "hourly" in data:
@@ -81,7 +83,6 @@ if lat and lon and tanggal:
         angin_speed = d["windspeed_10m"]
         angin_dir = d["winddirection_10m"]
 
-        # DataFrame
         df = pd.DataFrame({
             "Waktu": waktu,
             "Suhu (°C)": suhu,
@@ -94,7 +95,7 @@ if lat and lon and tanggal:
         })
 
         # Grafik suhu, hujan, awan, RH
-        st.subheader("📈 Grafik Cuaca per Jam")
+        st.markdown("<h3 style='font-size:20px;'>📈 Grafik Cuaca per Jam</h3>", unsafe_allow_html=True)
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=jam_labels, y=suhu, name="Suhu (°C)", line=dict(color="red")))
         fig.add_trace(go.Bar(x=jam_labels, y=hujan, name="Hujan (mm)", yaxis="y2", marker_color="skyblue", opacity=0.6))
@@ -104,17 +105,13 @@ if lat and lon and tanggal:
         fig.update_layout(
             xaxis=dict(title="Jam"),
             yaxis=dict(title="Suhu (°C)"),
-            yaxis2=dict(
-                title="RH / Hujan / Awan",
-                overlaying="y",
-                side="right"
-            ),
+            yaxis2=dict(title="RH / Hujan / Awan", overlaying="y", side="right"),
             height=500
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # Grafik arah angin
-        st.subheader("🧭 Arah & Kecepatan Angin")
+        # Grafik angin
+        st.markdown("<h3 style='font-size:20px;'>🧭 Arah & Kecepatan Angin</h3>", unsafe_allow_html=True)
         fig_angin = go.Figure()
         fig_angin.add_trace(go.Barpolar(
             r=angin_speed,
@@ -141,16 +138,11 @@ if lat and lon and tanggal:
         else:
             st.success("✅ Tidak ada cuaca ekstrem yang terdeteksi.")
 
-        # Tabel dan unduh CSV
-        st.markdown("### 📊 Tabel Data Cuaca")
+        # Tabel & CSV
+        st.markdown("<h3 style='font-size:20px;'>📊 Tabel Data Cuaca</h3>", unsafe_allow_html=True)
         st.dataframe(df, use_container_width=True)
         csv = df.to_csv(index=False).encode("utf-8")
         st.download_button("📥 Unduh Data (CSV)", data=csv, file_name="cuaca_per_jam.csv", mime="text/csv")
 
     else:
         st.error("❌ Data cuaca tidak tersedia.")
-
-# -------------------------
-# ✏️ Editor credit
-st.markdown("---")
-st.markdown("🧑‍💻 **Editor:** Ferri Kusuma (M8TB_14.22.0003)", unsafe_allow_html=True)
