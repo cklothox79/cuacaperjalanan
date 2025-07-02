@@ -5,18 +5,14 @@ from streamlit_folium import st_folium
 import folium
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Cuaca Perjalanan", layout="centered")
-st.title("🌤️ Cuaca Perjalanan")
-st.write("Lihat prakiraan suhu, hujan, awan, dan potensi cuaca ekstrem dari lokasi dan rentang waktu yang kamu pilih.")
+st.set_page_config(page_title="Cuaca Perjalanan (Per Jam)", layout="centered")
+st.title("🕓 Cuaca Perjalanan Per Jam")
+st.write("Lihat prakiraan suhu, hujan, awan, dan cuaca ekstrem setiap jam untuk lokasi dan tanggal yang kamu pilih.")
 
-# Input tanggal
-tanggal_awal, tanggal_akhir = st.date_input(
-    "📅 Pilih rentang tanggal:",
-    value=(date.today(), date.today()),
-    min_value=date.today()
-)
+# Input tanggal tunggal
+tanggal = st.date_input("📅 Pilih tanggal perjalanan:", value=date.today(), min_value=date.today())
 
-# Input lokasi manual
+# Input kota
 kota = st.text_input("📝 Masukkan nama kota (opsional):")
 
 # Peta lokasi
@@ -49,42 +45,39 @@ if not lat and kota:
     else:
         st.error("❌ Kota tidak ditemukan.")
 
-# Fungsi ambil data cuaca
-def get_weather(lat, lon, start_date, end_date):
+# Fungsi ambil data cuaca per jam
+def get_hourly_weather(lat, lon, tanggal):
+    tgl = tanggal.strftime("%Y-%m-%d")
     url = (
         f"https://api.open-meteo.com/v1/forecast?"
         f"latitude={lat}&longitude={lon}"
-        f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,cloudcover_mean,weathercode"
-        f"&timezone=auto&start_date={start_date}&end_date={end_date}"
+        f"&hourly=temperature_2m,precipitation,cloudcover,weathercode"
+        f"&timezone=auto&start_date={tgl}&end_date={tgl}"
     )
     r = requests.get(url)
     return r.json() if r.status_code == 200 else None
 
-# Tampilkan grafik jika lengkap
-if lat and lon and tanggal_awal and tanggal_akhir:
-    start = tanggal_awal.strftime("%Y-%m-%d")
-    end = tanggal_akhir.strftime("%Y-%m-%d")
-    data = get_weather(lat, lon, start, end)
-
-    if data and "daily" in data:
-        d = data["daily"]
-        tanggal = [datetime.strptime(t, "%Y-%m-%d").strftime("%d %b") for t in d["time"]]
-        tmax = d["temperature_2m_max"]
-        tmin = d["temperature_2m_min"]
-        hujan = d["precipitation_sum"]
-        awan = d["cloudcover_mean"]
-        weathercode = d["weathercode"]
+# Tampilkan grafik dan deteksi ekstrem
+if lat and lon and tanggal:
+    data = get_hourly_weather(lat, lon, tanggal)
+    if data and "hourly" in data:
+        d = data["hourly"]
+        waktu = d["time"]
+        jam_labels = [w[-5:] for w in waktu]  # ambil "HH:MM"
+        suhu = d["temperature_2m"]
+        hujan = d["precipitation"]
+        awan = d["cloudcover"]
+        kode = d["weathercode"]
 
         # Grafik
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=tanggal, y=tmax, name="Tmax (°C)", line=dict(color="red")))
-        fig.add_trace(go.Scatter(x=tanggal, y=tmin, name="Tmin (°C)", line=dict(color="blue")))
-        fig.add_trace(go.Bar(x=tanggal, y=hujan, name="Hujan (mm)", yaxis="y2", marker_color="skyblue", opacity=0.6))
-        fig.add_trace(go.Bar(x=tanggal, y=awan, name="Awan (%)", yaxis="y2", marker_color="gray", opacity=0.4))
+        fig.add_trace(go.Scatter(x=jam_labels, y=suhu, name="Suhu (°C)", line=dict(color="red")))
+        fig.add_trace(go.Bar(x=jam_labels, y=hujan, name="Hujan (mm)", yaxis="y2", marker_color="skyblue", opacity=0.6))
+        fig.add_trace(go.Bar(x=jam_labels, y=awan, name="Awan (%)", yaxis="y2", marker_color="gray", opacity=0.4))
 
         fig.update_layout(
-            title="📈 Grafik Prakiraan Cuaca",
-            xaxis=dict(title="Tanggal"),
+            title="📈 Grafik Cuaca per Jam",
+            xaxis=dict(title="Jam"),
             yaxis=dict(title="Suhu (°C)"),
             yaxis2=dict(
                 title="Hujan / Awan",
@@ -96,9 +89,15 @@ if lat and lon and tanggal_awal and tanggal_akhir:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # Deteksi potensi ekstrem
-        ekstrem_hari = [tanggal[i] for i, kode in enumerate(weathercode) if kode >= 80]
-        if ekstrem_hari:
-            st.warning(f"⚠️ Cuaca ekstrem diperkirakan pada: {', '.join(ekstrem_hari)}")
+        # Deteksi jam ekstrem
+        ekstrem = [
+            f"{w.replace('T', ' ')}"
+            for i, w in enumerate(waktu) if kode[i] >= 80
+        ]
+        if ekstrem:
+            daftar = "\n".join(f"• {e}" for e in ekstrem)
+            st.warning(f"⚠️ Cuaca ekstrem diperkirakan pada:\n\n{daftar}")
+        else:
+            st.success("✅ Tidak ada cuaca ekstrem yang terdeteksi.")
     else:
         st.error("❌ Data cuaca tidak tersedia.")
