@@ -20,7 +20,7 @@ st.markdown("### 🗺️ Atau klik lokasi pada peta:")
 
 m = folium.Map(location=[-2.5, 117.0], zoom_start=5)
 m.add_child(folium.LatLngPopup())
-map_data = st_folium(m, height=400, width=700)
+map_data = st_folium(m, height=300, width="100%")
 
 lat, lon = None, None
 
