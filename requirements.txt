@@ -2,3 +2,4 @@ streamlit
 requests
 streamlit-folium
 plotly
+pandas
