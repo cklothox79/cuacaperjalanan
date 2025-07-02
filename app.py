@@ -44,7 +44,7 @@ if kota:
 
 # Klik peta
 m.add_child(folium.LatLngPopup())
-map_data = st_folium(m, height=400, width=900)
+map_data = st_folium(m, height=300, width="100%")
 
 # Marker dari klik peta
 if map_data and map_data["last_clicked"]:
