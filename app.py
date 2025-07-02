@@ -6,15 +6,16 @@ from streamlit_folium import st_folium
 import folium
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Cuaca Perjalanan", layout="centered")
+st.set_page_config(page_title="Cuaca Perjalanan", layout="wide")
 st.title("🌤️ Cuaca Perjalanan")
 st.write("Lihat prakiraan suhu, hujan, awan, kelembapan, dan angin setiap jam untuk lokasi dan tanggal yang kamu pilih.")
 
-# Input tanggal
-tanggal = st.date_input("📅 Pilih tanggal perjalanan:", value=date.today(), min_value=date.today())
-
-# Input kota
-kota = st.text_input("📝 Masukkan nama kota (opsional):")
+# Layout input 2 kolom
+col1, col2 = st.columns([2, 1])
+with col1:
+    kota = st.text_input("📝 Masukkan nama kota (opsional):")
+with col2:
+    tanggal = st.date_input("📅 Pilih tanggal perjalanan:", value=date.today(), min_value=date.today())
 
 # Fungsi ambil koordinat dari kota
 def get_coordinates(nama_kota):
@@ -44,7 +45,7 @@ if kota:
 
 # Klik peta
 m.add_child(folium.LatLngPopup())
-map_data = st_folium(m, height=300, width="100%")
+map_data = st_folium(m, height=400, use_container_width=True)
 
 # Marker dari klik peta
 if map_data and map_data["last_clicked"]:
