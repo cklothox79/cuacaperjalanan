@@ -6,24 +6,22 @@ from streamlit_folium import st_folium
 import folium
 import plotly.graph_objects as go
 
-# Konfigurasi halaman
 st.set_page_config(page_title="Cuaca Perjalanan", layout="wide")
 
-# Judul & Nama Editor
+# Judul & Editor
 st.markdown("<h1 style='font-size:36px;'>🌤️ Cuaca Perjalanan</h1>", unsafe_allow_html=True)
 st.markdown("<p style='font-size:18px; color:gray;'><em>Editor: Ferri Kusuma (M8TB_14.22.0003)</em></p>", unsafe_allow_html=True)
 
-# Deskripsi
 st.markdown("<p style='font-size:17px;'>Lihat prakiraan suhu, hujan, awan, kelembapan, dan angin setiap jam untuk lokasi dan tanggal yang kamu pilih.</p>", unsafe_allow_html=True)
 
-# Input kota dan tanggal
+# Input
 col1, col2 = st.columns([2, 1])
 with col1:
     kota = st.text_input("📝 Masukkan nama kota (opsional):")
 with col2:
     tanggal = st.date_input("📅 Pilih tanggal perjalanan:", value=date.today(), min_value=date.today())
 
-# Fungsi ambil koordinat
+# Fungsi koordinat
 def get_coordinates(nama_kota):
     url = f"https://nominatim.openstreetmap.org/search?q={nama_kota}&format=json&limit=1"
     headers = {"User-Agent": "cuaca-perjalanan-app"}
@@ -35,7 +33,7 @@ def get_coordinates(nama_kota):
 
 lat = lon = None
 
-# Peta input
+# Peta
 st.markdown("<h3 style='font-size:20px;'>🗺️ Klik lokasi di peta atau masukkan nama kota</h3>", unsafe_allow_html=True)
 default_location = [-2.5, 117.0]
 m = folium.Map(location=default_location, zoom_start=5)
@@ -55,7 +53,7 @@ if map_data and map_data["last_clicked"]:
     lon = map_data["last_clicked"]["lng"]
     st.success(f"📍 Lokasi dari peta: {lat:.4f}, {lon:.4f}")
 
-# Ambil data cuaca dari Open-Meteo
+# Ambil data cuaca
 def get_hourly_weather(lat, lon, tanggal):
     tgl = tanggal.strftime("%Y-%m-%d")
     url = (
@@ -68,7 +66,6 @@ def get_hourly_weather(lat, lon, tanggal):
     r = requests.get(url)
     return r.json() if r.status_code == 200 else None
 
-# Tampilkan data cuaca
 if lat and lon and tanggal:
     data = get_hourly_weather(lat, lon, tanggal)
     if data and "hourly" in data:
@@ -110,23 +107,43 @@ if lat and lon and tanggal:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # Grafik angin
+        # Windrose besar, warna mencolok, legenda aktif
         st.markdown("<h3 style='font-size:20px;'>🧭 Arah & Kecepatan Angin</h3>", unsafe_allow_html=True)
+        warna = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
+                 '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
+                 '#bcbd22', '#17becf'] * (len(angin_speed) // 10 + 1)
         fig_angin = go.Figure()
         fig_angin.add_trace(go.Barpolar(
             r=angin_speed,
             theta=angin_dir,
-            width=[10]*len(angin_speed),
-            marker_color="royalblue",
-            opacity=0.7
+            name="Angin per jam",
+            marker_color=warna[:len(angin_speed)],
+            opacity=0.85
         ))
         fig_angin.update_layout(
             polar=dict(
-                angularaxis=dict(direction="clockwise", rotation=90),
-                radialaxis=dict(title="m/s")
+                angularaxis=dict(
+                    direction="clockwise",
+                    rotation=90,
+                    tickfont=dict(size=14)
+                ),
+                radialaxis=dict(
+                    title="m/s",
+                    tickfont=dict(size=13),
+                    titlefont=dict(size=15)
+                )
             ),
-            showlegend=False,
-            height=450
+            height=600,
+            legend=dict(
+                orientation="h",
+                yanchor="bottom",
+                y=-0.2,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=13)
+            ),
+            showlegend=True,
+            margin=dict(t=30, b=50)
         )
         st.plotly_chart(fig_angin, use_container_width=True)
 
@@ -138,7 +155,7 @@ if lat and lon and tanggal:
         else:
             st.success("✅ Tidak ada cuaca ekstrem yang terdeteksi.")
 
-        # Tabel & CSV
+        # Tabel & download
         st.markdown("<h3 style='font-size:20px;'>📊 Tabel Data Cuaca</h3>", unsafe_allow_html=True)
         st.dataframe(df, use_container_width=True)
         csv = df.to_csv(index=False).encode("utf-8")
