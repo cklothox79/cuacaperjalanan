@@ -11,10 +11,11 @@ st.write("Aplikasi ini membantu kamu melihat prakiraan cuaca untuk lokasi dan ta
 kota = st.text_input("Masukkan nama kota:")
 tanggal = st.date_input("Pilih tanggal perjalanan:", min_value=date.today())
 
-# Fungsi geocoding menggunakan Nominatim (OpenStreetMap)
+# Fungsi geocoding menggunakan Nominatim (OpenStreetMap) dengan User-Agent
 def get_coordinates(city_name):
     url = f"https://nominatim.openstreetmap.org/search?q={city_name}&format=json&limit=1"
-    response = requests.get(url)
+    headers = {"User-Agent": "cuaca-perjalanan-app"}
+    response = requests.get(url, headers=headers)
     if response.status_code == 200 and response.json():
         data = response.json()[0]
         return float(data["lat"]), float(data["lon"])
@@ -32,6 +33,7 @@ def get_weather(lat, lon, date_str):
         return response.json()
     return None
 
+# Logika utama aplikasi
 if kota and tanggal:
     lat, lon = get_coordinates(kota)
     if lat and lon:
@@ -41,8 +43,3 @@ if kota and tanggal:
             st.subheader(f"📍 Cuaca di {kota.title()} pada {tanggal.strftime('%d %B %Y')}")
             st.write(f"🌡️ Suhu Minimum: {daily['temperature_2m_min'][0]}°C")
             st.write(f"🌡️ Suhu Maksimum: {daily['temperature_2m_max'][0]}°C")
-            st.write(f"🌧️ Curah Hujan: {daily['precipitation_sum'][0]} mm")
-        else:
-            st.error("Data cuaca tidak ditemukan.")
-    else:
-        st.error("Lokasi tidak ditemukan. Coba cek ejaannya.")
