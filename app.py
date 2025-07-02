@@ -6,7 +6,7 @@ from streamlit_folium import st_folium
 import folium
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Cuaca Perjalanan (Per Jam)", layout="centered")
+st.set_page_config(page_title="Cuaca Perjalanan", layout="centered")
 st.title("🕓 Cuaca Perjalanan Per Jam")
 st.write("Lihat prakiraan suhu, hujan, awan, kelembapan, dan angin setiap jam untuk lokasi dan tanggal yang kamu pilih.")
 
