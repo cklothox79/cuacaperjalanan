@@ -37,4 +37,71 @@ def get_coordinates(city_name):
     headers = {"User-Agent": "cuaca-perjalanan-app"}
     response = requests.get(url, headers=headers)
     if response.status_code == 200 and response.json():
-        data = response.j
+        data = response.json()[0]
+        return float(data["lat"]), float(data["lon"])
+    return None, None
+
+if not lat and kota:
+    lat, lon = get_coordinates(kota)
+    if lat and lon:
+        st.success(f"📍 Lokasi dari nama kota: {lat:.4f}, {lon:.4f}")
+    else:
+        st.error("❌ Kota tidak ditemukan.")
+
+# Ambil cuaca
+def get_weather(lat, lon, date_str):
+    url = (
+        f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}"
+        f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=auto"
+        f"&start_date={date_str}&end_date={date_str}"
+    )
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()
+    return None
+
+# Tampilkan cuaca dan grafik
+if lat and lon and tanggal:
+    cuaca = get_weather(lat, lon, tanggal.strftime("%Y-%m-%d"))
+    if cuaca and "daily" in cuaca:
+        daily = cuaca["daily"]
+        st.subheader(f"📍 Cuaca pada {tanggal.strftime('%d %B %Y')}")
+        st.write(f"🌡️ Suhu Minimum: {daily['temperature_2m_min'][0]}°C")
+        st.write(f"🌡️ Suhu Maksimum: {daily['temperature_2m_max'][0]}°C")
+        st.write(f"🌧️ Curah Hujan: {daily['precipitation_sum'][0]} mm")
+
+        # Grafik
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=[tanggal.strftime('%d %b')],
+            y=[daily['temperature_2m_max'][0]],
+            name='Suhu Maksimum (°C)',
+            mode='lines+markers',
+            line=dict(color='tomato')
+        ))
+        fig.add_trace(go.Scatter(
+            x=[tanggal.strftime('%d %b')],
+            y=[daily['temperature_2m_min'][0]],
+            name='Suhu Minimum (°C)',
+            mode='lines+markers',
+            line=dict(color='royalblue')
+        ))
+        fig.add_trace(go.Bar(
+            x=[tanggal.strftime('%d %b')],
+            y=[daily['precipitation_sum'][0]],
+            name='Curah Hujan (mm)',
+            yaxis='y2',
+            marker=dict(color='skyblue'),
+            opacity=0.6
+        ))
+        fig.update_layout(
+            title='Grafik Cuaca',
+            yaxis=dict(title='Suhu (°C)'),
+            yaxis2=dict(title='Curah Hujan (mm)', overlaying='y', side='right'),
+            legend=dict(x=0, y=1),
+            height=400
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
+    else:
+        st.error("❌ Data cuaca tidak tersedia.")
