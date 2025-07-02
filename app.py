@@ -149,3 +149,8 @@ if lat and lon and tanggal:
 
     else:
         st.error("❌ Data cuaca tidak tersedia.")
+
+# -------------------------
+# ✏️ Editor credit
+st.markdown("---")
+st.markdown("🧑‍💻 **Editor:** Ferri Kusuma (M8TB_14.22.0003)", unsafe_allow_html=True)
