@@ -43,3 +43,8 @@ if kota and tanggal:
             st.subheader(f"📍 Cuaca di {kota.title()} pada {tanggal.strftime('%d %B %Y')}")
             st.write(f"🌡️ Suhu Minimum: {daily['temperature_2m_min'][0]}°C")
             st.write(f"🌡️ Suhu Maksimum: {daily['temperature_2m_max'][0]}°C")
+            st.write(f"🌧️ Curah Hujan: {daily['precipitation_sum'][0]} mm")
+        else:
+            st.error("Data cuaca tidak ditemukan.")
+    else:
+        st.error("Lokasi tidak ditemukan. Coba cek ejaannya.")
