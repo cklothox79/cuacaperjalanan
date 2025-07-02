@@ -23,7 +23,7 @@ kota = st.text_input("📝 Masukkan nama kota (opsional):")
 st.markdown("### 🗺️ Atau klik lokasi di peta:")
 m = folium.Map(location=[-2.5, 117.0], zoom_start=5)
 m.add_child(folium.LatLngPopup())
-map_data = st_folium(m, height=300, width="100%")
+map_data = st_folium(m, height=400, width=900)
 
 lat = lon = None
 if map_data and map_data["last_clicked"]:
@@ -99,6 +99,6 @@ if lat and lon and tanggal_awal and tanggal_akhir:
         # Deteksi potensi ekstrem
         ekstrem_hari = [tanggal[i] for i, kode in enumerate(weathercode) if kode >= 80]
         if ekstrem_hari:
-            st.warning(f"⚠️ Cuaca ekstrem diperkirakan pada: {', '.join(extrem_hari)}")
+            st.warning(f"⚠️ Cuaca ekstrem diperkirakan pada: {', '.join(ekstrem_hari)}")
     else:
         st.error("❌ Data cuaca tidak tersedia.")
