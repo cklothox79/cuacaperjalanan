@@ -1,3 +1,5 @@
+# Cuaca Perjalanan - Editor: Ferri Kusuma (M8TB_14.22.0003)
+
 import streamlit as st
 import requests
 import pandas as pd
@@ -14,14 +16,13 @@ st.markdown("<p style='font-size:18px; color:gray;'><em>Editor: Ferri Kusuma (M8
 
 st.markdown("<p style='font-size:17px;'>Lihat prakiraan suhu, hujan, awan, kelembapan, dan angin setiap jam untuk lokasi dan tanggal yang kamu pilih.</p>", unsafe_allow_html=True)
 
-# Input
+# Input kota & tanggal
 col1, col2 = st.columns([2, 1])
 with col1:
     kota = st.text_input("📝 Masukkan nama kota (opsional):")
 with col2:
     tanggal = st.date_input("📅 Pilih tanggal perjalanan:", value=date.today(), min_value=date.today())
 
-# Fungsi koordinat
 def get_coordinates(nama_kota):
     url = f"https://nominatim.openstreetmap.org/search?q={nama_kota}&format=json&limit=1"
     headers = {"User-Agent": "cuaca-perjalanan-app"}
@@ -53,7 +54,6 @@ if map_data and map_data["last_clicked"]:
     lon = map_data["last_clicked"]["lng"]
     st.success(f"📍 Lokasi dari peta: {lat:.4f}, {lon:.4f}")
 
-# Ambil data cuaca
 def get_hourly_weather(lat, lon, tanggal):
     tgl = tanggal.strftime("%Y-%m-%d")
     url = (
@@ -107,7 +107,7 @@ if lat and lon and tanggal:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # Windrose besar, warna mencolok, legenda aktif
+        # Windrose besar, mencolok, dengan legenda
         st.markdown("<h3 style='font-size:20px;'>🧭 Arah & Kecepatan Angin</h3>", unsafe_allow_html=True)
         warna = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
                  '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
@@ -125,25 +125,25 @@ if lat and lon and tanggal:
                 angularaxis=dict(
                     direction="clockwise",
                     rotation=90,
-                    tickfont=dict(size=14)
+                    tickfont_size=14
                 ),
                 radialaxis=dict(
-                    title="m/s",
-                    tickfont=dict(size=13),
-                    titlefont=dict(size=15)
+                    tickfont_size=13,
+                    angle=45,
+                    tickangle=45
                 )
             ),
             height=600,
             legend=dict(
                 orientation="h",
                 yanchor="bottom",
-                y=-0.2,
+                y=-0.25,
                 xanchor="center",
                 x=0.5,
                 font=dict(size=13)
             ),
             showlegend=True,
-            margin=dict(t=30, b=50)
+            margin=dict(t=30, b=60)
         )
         st.plotly_chart(fig_angin, use_container_width=True)
 
@@ -155,7 +155,7 @@ if lat and lon and tanggal:
         else:
             st.success("✅ Tidak ada cuaca ekstrem yang terdeteksi.")
 
-        # Tabel & download
+        # Tabel & unduh
         st.markdown("<h3 style='font-size:20px;'>📊 Tabel Data Cuaca</h3>", unsafe_allow_html=True)
         st.dataframe(df, use_container_width=True)
         csv = df.to_csv(index=False).encode("utf-8")
