@@ -22,7 +22,7 @@ with col1:
 with col2:
     tanggal = st.date_input("📅 Pilih tanggal perjalanan:", value=date.today(), min_value=date.today())
 
-# Fungsi untuk ambil koordinat dengan koneksi internet
+# Fungsi koordinat: API + fallback lokal
 @st.cache_data(show_spinner=False)
 def get_coordinates(nama_kota):
     try:
@@ -34,11 +34,25 @@ def get_coordinates(nama_kota):
         if hasil:
             return float(hasil[0]["lat"]), float(hasil[0]["lon"])
         else:
-            st.warning("⚠️ Kota tidak ditemukan. Silakan masukkan nama kota yang lebih spesifik.")
+            st.warning("⚠️ Kota tidak ditemukan. Coba masukkan nama kota yang lebih lengkap.")
             return None, None
-    except requests.exceptions.RequestException as e:
-        st.error(f"❌ Gagal mengambil koordinat. Periksa koneksi internet atau coba lagi.\n\n`{e}`")
-        return None, None
+    except:
+        fallback_kota = {
+            "mojokerto": (-7.4722, 112.4333),
+            "surabaya": (-7.2575, 112.7521),
+            "sidoarjo": (-7.45, 112.7167),
+            "malang": (-7.9839, 112.6214),
+            "jakarta": (-6.2, 106.8),
+            "bandung": (-6.9147, 107.6098),
+            "semarang": (-6.9667, 110.4167),
+        }
+        nama = nama_kota.strip().lower()
+        if nama in fallback_kota:
+            st.info("🔁 Menggunakan koordinat lokal karena koneksi API gagal.")
+            return fallback_kota[nama]
+        else:
+            st.error("❌ Gagal mengambil koordinat dari internet dan tidak ditemukan dalam data lokal.")
+            return None, None
 
 lat = lon = None
 
@@ -102,7 +116,7 @@ if lat and lon and tanggal:
             "Kode Cuaca": kode
         })
 
-        # Grafik
+        # Grafik suhu, hujan, awan, RH
         st.markdown("<h3 style='font-size:20px;'>📈 Grafik Cuaca per Jam</h3>", unsafe_allow_html=True)
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=jam_labels, y=suhu, name="Suhu (°C)", line=dict(color="red")))
