@@ -10,19 +10,19 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Cuaca Perjalanan", layout="wide")
 
-# Judul & Editor
+# Judul
 st.markdown("<h1 style='font-size:36px;'>🌤️ Cuaca Perjalanan</h1>", unsafe_allow_html=True)
 st.markdown("<p style='font-size:18px; color:gray;'><em>Editor: Ferri Kusuma (M8TB_14.22.0003)</em></p>", unsafe_allow_html=True)
 st.markdown("<p style='font-size:17px;'>Lihat prakiraan suhu, hujan, awan, kelembapan, dan angin setiap jam untuk lokasi dan tanggal yang kamu pilih.</p>", unsafe_allow_html=True)
 
-# Input kota & tanggal
+# Input
 col1, col2 = st.columns([2, 1])
 with col1:
     kota = st.text_input("📝 Masukkan nama kota (opsional):")
 with col2:
     tanggal = st.date_input("📅 Pilih tanggal perjalanan:", value=date.today(), min_value=date.today())
 
-# Fungsi koordinat (dengan cache & error handling)
+# Fungsi untuk ambil koordinat dengan koneksi internet
 @st.cache_data(show_spinner=False)
 def get_coordinates(nama_kota):
     try:
@@ -32,9 +32,7 @@ def get_coordinates(nama_kota):
         r.raise_for_status()
         hasil = r.json()
         if hasil:
-            lat = float(hasil[0]["lat"])
-            lon = float(hasil[0]["lon"])
-            return lat, lon
+            return float(hasil[0]["lat"]), float(hasil[0]["lon"])
         else:
             st.warning("⚠️ Kota tidak ditemukan. Silakan masukkan nama kota yang lebih spesifik.")
             return None, None
@@ -65,7 +63,7 @@ if map_data and map_data["last_clicked"]:
     lon = map_data["last_clicked"]["lng"]
     st.success(f"📍 Lokasi dari peta: {lat:.4f}, {lon:.4f}")
 
-# Fungsi ambil data cuaca
+# Fungsi ambil cuaca
 def get_hourly_weather(lat, lon, tanggal):
     tgl = tanggal.strftime("%Y-%m-%d")
     url = (
@@ -78,7 +76,7 @@ def get_hourly_weather(lat, lon, tanggal):
     r = requests.get(url)
     return r.json() if r.status_code == 200 else None
 
-# Tampilkan data jika lengkap
+# Tampilkan cuaca
 if lat and lon and tanggal:
     data = get_hourly_weather(lat, lon, tanggal)
     if data and "hourly" in data:
@@ -104,7 +102,7 @@ if lat and lon and tanggal:
             "Kode Cuaca": kode
         })
 
-        # Grafik suhu, hujan, awan, RH
+        # Grafik
         st.markdown("<h3 style='font-size:20px;'>📈 Grafik Cuaca per Jam</h3>", unsafe_allow_html=True)
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=jam_labels, y=suhu, name="Suhu (°C)", line=dict(color="red")))
