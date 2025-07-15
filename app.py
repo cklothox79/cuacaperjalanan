@@ -13,7 +13,6 @@ st.set_page_config(page_title="Cuaca Perjalanan", layout="wide")
 # Judul & Editor
 st.markdown("<h1 style='font-size:36px;'>🌤️ Cuaca Perjalanan</h1>", unsafe_allow_html=True)
 st.markdown("<p style='font-size:18px; color:gray;'><em>Editor: Ferri Kusuma (M8TB_14.22.0003)</em></p>", unsafe_allow_html=True)
-
 st.markdown("<p style='font-size:17px;'>Lihat prakiraan suhu, hujan, awan, kelembapan, dan angin setiap jam untuk lokasi dan tanggal yang kamu pilih.</p>", unsafe_allow_html=True)
 
 # Input kota & tanggal
@@ -23,14 +22,25 @@ with col1:
 with col2:
     tanggal = st.date_input("📅 Pilih tanggal perjalanan:", value=date.today(), min_value=date.today())
 
+# Fungsi koordinat (dengan cache & error handling)
+@st.cache_data(show_spinner=False)
 def get_coordinates(nama_kota):
-    url = f"https://nominatim.openstreetmap.org/search?q={nama_kota}&format=json&limit=1"
-    headers = {"User-Agent": "cuaca-perjalanan-app"}
-    r = requests.get(url, headers=headers)
-    if r.status_code == 200 and r.json():
-        data = r.json()[0]
-        return float(data["lat"]), float(data["lon"])
-    return None, None
+    try:
+        url = f"https://nominatim.openstreetmap.org/search?q={nama_kota}&format=json&limit=1"
+        headers = {"User-Agent": "cuaca-perjalanan-app"}
+        r = requests.get(url, headers=headers, timeout=10)
+        r.raise_for_status()
+        hasil = r.json()
+        if hasil:
+            lat = float(hasil[0]["lat"])
+            lon = float(hasil[0]["lon"])
+            return lat, lon
+        else:
+            st.warning("⚠️ Kota tidak ditemukan. Silakan masukkan nama kota yang lebih spesifik.")
+            return None, None
+    except requests.exceptions.RequestException as e:
+        st.error(f"❌ Gagal mengambil koordinat. Periksa koneksi internet atau coba lagi.\n\n`{e}`")
+        return None, None
 
 lat = lon = None
 
@@ -41,10 +51,11 @@ m = folium.Map(location=default_location, zoom_start=5)
 
 if kota:
     lat, lon = get_coordinates(kota)
-    if lat and lon:
-        folium.Marker([lat, lon], tooltip=f"📍 {kota.title()}").add_to(m)
-        m.location = [lat, lon]
-        m.zoom_start = 9
+    if lat is None or lon is None:
+        st.stop()
+    folium.Marker([lat, lon], tooltip=f"📍 {kota.title()}").add_to(m)
+    m.location = [lat, lon]
+    m.zoom_start = 9
 
 m.add_child(folium.LatLngPopup())
 map_data = st_folium(m, height=400, use_container_width=True)
@@ -54,6 +65,7 @@ if map_data and map_data["last_clicked"]:
     lon = map_data["last_clicked"]["lng"]
     st.success(f"📍 Lokasi dari peta: {lat:.4f}, {lon:.4f}")
 
+# Fungsi ambil data cuaca
 def get_hourly_weather(lat, lon, tanggal):
     tgl = tanggal.strftime("%Y-%m-%d")
     url = (
@@ -66,6 +78,7 @@ def get_hourly_weather(lat, lon, tanggal):
     r = requests.get(url)
     return r.json() if r.status_code == 200 else None
 
+# Tampilkan data jika lengkap
 if lat and lon and tanggal:
     data = get_hourly_weather(lat, lon, tanggal)
     if data and "hourly" in data:
@@ -107,7 +120,7 @@ if lat and lon and tanggal:
         )
         st.plotly_chart(fig, use_container_width=True)
 
-        # Windrose besar, mencolok, dengan legenda
+        # Windrose
         st.markdown("<h3 style='font-size:20px;'>🧭 Arah & Kecepatan Angin</h3>", unsafe_allow_html=True)
         warna = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
                  '#9467bd', '#8c564b', '#e377c2', '#7f7f7f',
