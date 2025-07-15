@@ -134,12 +134,13 @@ if lat and lon and tanggal:
         fig.add_trace(go.Scatter(x=jam_labels, y=rh, name="RH (%)", yaxis="y2", line=dict(color="green", dash="dot")))
 
         fig.update_layout(
-            xaxis=dict(title="Jam"),
-            yaxis=dict(title="Suhu (°C)"),
-            yaxis2=dict(title="RH / Hujan / Awan", overlaying="y", side="right"),
-            height=500
+        xaxis=dict(title="Jam"),
+        yaxis=dict(title="Suhu (°C)"),
+        yaxis2=dict(title="RH / Hujan / Awan", overlaying="y", side="right"),
+        height=500
         )
         st.plotly_chart(fig, use_container_width=True)
+
 
         # Windrose
         st.markdown("<h3 style='font-size:20px;'>🧭 Arah & Kecepatan Angin</h3>", unsafe_allow_html=True)
