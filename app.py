@@ -116,6 +116,15 @@ if lat and lon and tanggal:
             "Kode Cuaca": kode
         })
 
+        # Cuaca ekstrem (dipindah ke atas)
+        ekstrem = [w.replace("T", " ") for i, w in enumerate(waktu) if kode[i] >= 80]
+        st.markdown("<h3 style='font-size:20px;'>⚠️ Peringatan Cuaca Ekstrem</h3>", unsafe_allow_html=True)
+        if ekstrem:
+            daftar = "\n".join(f"• {e}" for e in ekstrem)
+            st.warning(f"Cuaca ekstrem diperkirakan pada:\n\n{daftar}")
+        else:
+            st.success("✅ Tidak ada cuaca ekstrem yang terdeteksi.")
+
         # Grafik suhu, hujan, awan, RH
         st.markdown("<h3 style='font-size:20px;'>📈 Grafik Cuaca per Jam</h3>", unsafe_allow_html=True)
         fig = go.Figure()
@@ -171,14 +180,6 @@ if lat and lon and tanggal:
             margin=dict(t=30, b=60)
         )
         st.plotly_chart(fig_angin, use_container_width=True)
-
-        # Cuaca ekstrem
-        ekstrem = [w.replace("T", " ") for i, w in enumerate(waktu) if kode[i] >= 80]
-        if ekstrem:
-            daftar = "\n".join(f"• {e}" for e in ekstrem)
-            st.warning(f"⚠️ Cuaca ekstrem diperkirakan pada:\n\n{daftar}")
-        else:
-            st.success("✅ Tidak ada cuaca ekstrem yang terdeteksi.")
 
         # Tabel & unduh
         st.markdown("<h3 style='font-size:20px;'>📊 Tabel Data Cuaca</h3>", unsafe_allow_html=True)
