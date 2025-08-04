@@ -1,12 +1,5 @@
 # Cuaca Perjalanan - Editor: Ferri Kusuma (M8TB_14.22.0003)
 
-import streamlit as st
-import requests
-import pandas as pd
-from datetime import date
-from streamlit_folium import st_folium
-import folium
-import plotly.graph_objects as go
 
 st.set_page_config(page_title="Cuaca Perjalanan", layout="wide")
 
@@ -190,3 +183,4 @@ if lat and lon and tanggal:
 
     else:
         st.error("❌ Data cuaca tidak tersedia.")
+
