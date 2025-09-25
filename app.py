@@ -12,7 +12,7 @@ st.set_page_config(page_title="Cuaca Perjalanan", layout="wide")
 
 # Judul
 st.markdown("<h1 style='font-size:36px;'>🌤️ Cuaca Perjalanan</h1>", unsafe_allow_html=True)
-st.markdown("<p style='font-size:18px; color:gray;'><em>Editor: Ferri Kusuma (M8TB_14.22.0003)</em></p>", unsafe_allow_html=True)
+st.markdown("<p style='font-size:18px; color:gray;'><em>Editor: Ferri Kusuma DIBRAN (M8TB_14.22.0003)</em></p>", unsafe_allow_html=True)
 st.markdown("<p style='font-size:17px;'>Lihat prakiraan suhu, hujan, awan, kelembapan, dan angin setiap jam untuk lokasi dan tanggal yang kamu pilih.</p>", unsafe_allow_html=True)
 
 # Input
@@ -190,5 +190,6 @@ if lat and lon and tanggal:
 
     else:
         st.error("❌ Data cuaca tidak tersedia.")
+
 
 
